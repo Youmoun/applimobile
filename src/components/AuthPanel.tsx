@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabase'
 import { ProviderEdit } from './ProviderEdit'
 import type { Provider } from '../types'
@@ -94,9 +95,9 @@ export function AuthPanel(){
           Se déconnecter
         </button>
 
-        {/* Modal scrollable */}
-        {editOpen && myProvider && (
-          <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-50 overflow-auto">
+        {/* Modal via Portal pour éviter les problèmes de z-index/sticky header */}
+        {editOpen && myProvider && createPortal(
+          <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-[9999] overflow-auto">
             <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 bg-white relative rounded-xl">
               <button
                 className="absolute right-3 top-3 text-gray-500 hover:text-gray-900"
@@ -113,12 +114,14 @@ export function AuthPanel(){
                 }}
               />
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     )
   }
 
+  // Non connecté : mini formulaire
   return (
     <div className="flex items-center gap-2">
       <input
