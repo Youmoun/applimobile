@@ -45,17 +45,17 @@ export function ProviderDetail({ provider, onClose, refresh }: Props) {
     await refresh()
   }
 
-  // === MODAL via PORTAL (passe toujours devant, mobile plein écran) ===
   return createPortal(
     <>
-      {/* Backdrop + container */}
+      {/* Backdrop */}
       <div className="fixed inset-0 bg-black/30 z-[9998]" onClick={onClose} />
 
+      {/* Container plein écran mobile, fenêtré desktop */}
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4 pointer-events-none">
         <div
           className="
             pointer-events-auto bg-white card
-            w-full h-[100vh] rounded-none
+            w-full h-[100svh] rounded-none
             sm:max-w-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-xl
             overflow-y-auto relative
           "
@@ -67,20 +67,20 @@ export function ProviderDetail({ provider, onClose, refresh }: Props) {
             ✕
           </button>
 
-          {/* Header sticky en mobile pour accès rapide au close */}
-          <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b px-4 py-3 sm:hidden">
-            <div className="font-semibold">Fiche prestataire</div>
+          {/* Header sticky (mobile) */}
+          <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b px-3 py-2 sm:hidden">
+            <div className="font-semibold text-base">Fiche prestataire</div>
           </div>
 
-          <div className="p-4 sm:p-6">
-            <div className="flex items-center gap-4">
+          <div className="p-3 sm:p-6">
+            <div className="flex items-center gap-3">
               <img
                 src={provider.photo_url || 'https://placehold.co/160x160?text=Photo'}
                 alt={`${provider.first_name} ${provider.last_name}`}
-                className="h-20 w-20 rounded-2xl object-cover"
+                className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl object-cover"
               />
               <div className="flex-1">
-                <h3 className="text-xl font-semibold">
+                <h3 className="text-lg sm:text-xl font-semibold">
                   {provider.first_name} {provider.last_name}
                 </h3>
                 <div className="text-sm text-gray-500">
@@ -89,7 +89,7 @@ export function ProviderDetail({ provider, onClose, refresh }: Props) {
                 <div className="mt-1"><Stars value={avg || 0} /></div>
 
                 {isOwner && (
-                  <div className="mt-3">
+                  <div className="mt-2">
                     <button
                       className="btn-secondary px-3 py-1 rounded-xl"
                       onClick={() => setEditing(true)}
@@ -104,12 +104,12 @@ export function ProviderDetail({ provider, onClose, refresh }: Props) {
             {provider.about && <p className="mt-3 text-sm text-gray-600">{provider.about}</p>}
 
             <div className="mt-4">
-              <h4 className="font-semibold mb-2">Tarifs</h4>
+              <h4 className="font-semibold mb-2 text-base sm:text-lg">Tarifs</h4>
               <div className="grid sm:grid-cols-2 gap-2">
                 {provider.services?.map((s, i) => (
                   <div key={i} className="card p-3 flex items-center justify-between">
-                    <span className="font-medium">{s.name}</span>
-                    <span className="tabular-nums">{Number(s.price).toFixed(2)} €</span>
+                    <span className="font-medium text-sm sm:text-base">{s.name}</span>
+                    <span className="tabular-nums text-sm sm:text-base">{Number(s.price).toFixed(2)} €</span>
                   </div>
                 ))}
                 {(!provider.services || provider.services.length === 0) && (
@@ -141,7 +141,7 @@ export function ProviderDetail({ provider, onClose, refresh }: Props) {
         </div>
       </div>
 
-      {/* Sous-modal d’édition (aussi en Portal, plein écran mobile) */}
+      {/* Sous-modal d’édition */}
       {editing && (
         <>
           <div className="fixed inset-0 bg-black/30 z-[10000]" />
@@ -149,7 +149,7 @@ export function ProviderDetail({ provider, onClose, refresh }: Props) {
             <div
               className="
                 pointer-events-auto bg-white card
-                w-full h-[100vh] rounded-none
+                w-full h-[100svh] rounded-none
                 sm:max-w-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-xl
                 overflow-y-auto relative
               "
@@ -161,11 +161,11 @@ export function ProviderDetail({ provider, onClose, refresh }: Props) {
                 ✕
               </button>
 
-              <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b px-4 py-3 sm:hidden">
-                <div className="font-semibold">Modifier mon profil</div>
+              <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b px-3 py-2 sm:hidden">
+                <div className="font-semibold text-base">Modifier mon profil</div>
               </div>
 
-              <div className="p-4 sm:p-6">
+              <div className="p-3 sm:p-6">
                 <h2 className="text-xl font-semibold mb-4 hidden sm:block">Modifier mon profil</h2>
                 <ProviderEdit
                   providerId={provider.id!}
