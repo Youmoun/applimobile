@@ -12,46 +12,68 @@ export function AuthPanel(){
   const [myProvider, setMyProvider] = useState<Provider | null>(null)
   const [editOpen, setEditOpen] = useState(false)
 
-  // Suivre la session et charger "mon" provider
-  useEffect(()=>{
-    const load = async () => {
+  // charge la session + mon provider
+  const loadSessionAndMine = async () => {
+    try {
       const { data } = await supabase.auth.getSession()
-      setSessionEmail(data.session?.user?.email ?? null)
+      const sEmail = data.session?.user?.email ?? null
+      setSessionEmail(sEmail)
 
-      const { data: userData } = await supabase.auth.getUser()
+      const { data: userData, error: uErr } = await supabase.auth.getUser()
+      if (uErr) console.error('getUser error:', uErr)
       const uid = userData.user?.id
       if (!uid) { setMyProvider(null); return }
-      const { data: mine } = await supabase
+
+      const { data: mine, error: mErr } = await supabase
         .from('providers')
         .select('*, services(*), ratings(stars)')
         .eq('user_id', uid)
         .maybeSingle()
+      if (mErr && (mErr as any).code !== 'PGRST116') console.error('fetch my provider error:', mErr)
+
       setMyProvider((mine || null) as unknown as Provider | null)
+    } catch (e) {
+      console.error('loadSessionAndMine failed:', e)
     }
-    load()
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, _session) => load())
+  }
+
+  useEffect(()=>{
+    loadSessionAndMine()
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, _session) => {
+      loadSessionAndMine()
+    })
     return () => { sub.subscription.unsubscribe() }
   }, [])
 
   async function signUp(){
-    setLoading(true)
-    const { data, error } = await supabase.auth.signUp({ email, password })
-    setLoading(false)
-    if (error) return alert(error.message)
-    if (data.session) alert('Inscription réussie. Vous êtes connecté.')
-    else alert('Inscription réussie. Vérifiez votre e-mail puis connectez-vous.')
-  }
-  async function signIn(){
-    setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (error) return alert(error.message)
-  }
-  async function signOut(){
-    await supabase.auth.signOut()
+    try{
+      setLoading(true)
+      const { data, error } = await supabase.auth.signUp({ email, password })
+      if (error) { console.error('signUp error:', error); alert(error.message); return }
+      if (data.session) alert('Inscription réussie. Vous êtes connecté.')
+      else alert('Inscription réussie. Vérifiez votre e-mail puis connectez-vous.')
+    } catch(e:any){
+      console.error(e); alert(e.message || 'Erreur inconnue à l’inscription')
+    } finally { setLoading(false); loadSessionAndMine() }
   }
 
-  // UI quand connecté : email + Mon profil (si existe) + Déconnexion
+  async function signIn(){
+    try{
+      setLoading(true)
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) { console.error('signIn error:', error); alert(error.message); return }
+      // connecté
+      await loadSessionAndMine()
+    } catch(e:any){
+      console.error(e); alert(e.message || 'Erreur inconnue à la connexion')
+    } finally { setLoading(false) }
+  }
+
+  async function signOut(){
+    await supabase.auth.signOut()
+    await loadSessionAndMine()
+  }
+
   if (sessionEmail){
     return (
       <div className="flex items-center gap-2 text-sm">
@@ -61,6 +83,7 @@ export function AuthPanel(){
 
         {myProvider && (
           <button
+            type="button"
             className="btn-secondary px-3 py-1 rounded-xl"
             onClick={()=> setEditOpen(true)}
             title="Modifier mon profil prestataire"
@@ -69,11 +92,10 @@ export function AuthPanel(){
           </button>
         )}
 
-        <button className="btn-secondary px-3 py-1 rounded-xl" onClick={signOut}>
+        <button type="button" className="btn-secondary px-3 py-1 rounded-xl" onClick={signOut}>
           Se déconnecter
         </button>
 
-        {/* Modal d’édition du profil */}
         {editOpen && myProvider && (
           <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-50">
             <div className="card max-w-2xl w-full p-6 bg-white relative">
@@ -88,17 +110,7 @@ export function AuthPanel(){
                 providerId={myProvider.id!}
                 onSaved={async ()=>{
                   setEditOpen(false)
-                  // Recharge mon provider pour refléter les changements
-                  const { data: userData } = await supabase.auth.getUser()
-                  const uid = userData.user?.id
-                  if (uid){
-                    const { data: mine } = await supabase
-                      .from('providers')
-                      .select('*, services(*), ratings(stars)')
-                      .eq('user_id', uid)
-                      .maybeSingle()
-                    setMyProvider((mine || null) as unknown as Provider | null)
-                  }
+                  await loadSessionAndMine()
                 }}
               />
             </div>
@@ -108,7 +120,6 @@ export function AuthPanel(){
     )
   }
 
-  // UI quand NON connecté : formulaire rapide login/signup
   return (
     <div className="flex items-center gap-2">
       <input
@@ -126,10 +137,10 @@ export function AuthPanel(){
         value={password}
         onChange={e=>setPassword(e.target.value)}
       />
-      <button className="btn-secondary px-3 py-2 rounded-xl" onClick={signIn} disabled={loading}>
+      <button type="button" className="btn-secondary px-3 py-2 rounded-xl" onClick={signIn} disabled={loading}>
         Se connecter
       </button>
-      <button className="btn px-3 py-2 rounded-xl" onClick={signUp} disabled={loading}>
+      <button type="button" className="btn px-3 py-2 rounded-xl" onClick={signUp} disabled={loading}>
         {loading ? '...' : 'Créer un compte'}
       </button>
     </div>
