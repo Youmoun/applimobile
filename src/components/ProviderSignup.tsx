@@ -47,6 +47,7 @@ export function ProviderSignup({ onCreated }:{ onCreated: () => void }){
     try{
       const { data: { user } } = await supabase.auth.getUser()
 
+      // Upload image vers Storage (bucket 'photos')
       let finalPhotoUrl = photo_url || null
       if (file) {
         const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
@@ -61,11 +62,13 @@ export function ProviderSignup({ onCreated }:{ onCreated: () => void }){
         .insert({ first_name, last_name, department, city, phone, photo_url: finalPhotoUrl, about: about || null, categories, user_id: user?.id || null })
         .select('*').single()
       if (error) throw error
+
       if (p?.id && clean.length){
         const withPid = clean.map(s => ({ ...s, provider_id: p.id }))
         const { error: sErr } = await supabase.from('services').insert(withPid)
         if (sErr) throw sErr
       }
+
       onCreated()
       setFirst(''); setLast(''); setDepartment(''); setCity(''); setPhone(''); setPhoto(''); setFile(null); setAbout(''); setCategories([]); setServices([{name:'', price:0}])
     } catch(err: any){
@@ -126,7 +129,11 @@ export function ProviderSignup({ onCreated }:{ onCreated: () => void }){
             <div key={i} className="grid grid-cols-12 gap-2 items-center">
               <div className="col-span-7"><input className="input" placeholder="Nom de la prestation" value={s.name} onChange={e=>updateService(i,'name', e.target.value)} required /></div>
               <div className="col-span-4"><input className="input" type="number" min="0" step="0.01" placeholder="Prix (€)" value={s.price} onChange={e=>updateService(i,'price', e.target.value)} required /></div>
-              <div className="col-span-1 text-right">{services.length>1 and <button type="button" className="btn-secondary px-3 py-2 rounded-xl" onClick={()=>removeService(i)}>✕</button>}</div>
+              <div className="col-span-1 text-right">
+                {services.length > 1 && (
+                  <button type="button" className="btn-secondary px-3 py-2 rounded-xl" onClick={()=>removeService(i)}>✕</button>
+                )}
+              </div>
             </div>
           ))}
         </div>
