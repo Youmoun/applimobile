@@ -17,23 +17,30 @@ export function AuthPanel(){
     })
     return () => { sub.subscription.unsubscribe() }
   }, [])
+  
+// src/components/AuthPanel.tsx
+async function signUp(){
+  setLoading(true)
+  const { data, error } = await supabase.auth.signUp({ email, password })
+  setLoading(false)
+  if (error) return alert(error.message)
 
-  async function signUp(){
-    setLoading(true)
-    const { error } = await supabase.auth.signUp({ email, password })
-    setLoading(false)
-    if (error) return alert(error.message)
-    alert('Inscription réussie. Vous êtes connecté.')
+  if (data.session) {
+    // Email confirmation désactivée -> session directe
+    alert("Inscription réussie. Vous êtes connecté.")
+  } else {
+    // Email confirmation activée -> pas de session tant que tu n'as pas confirmé
+    alert("Inscription réussie. Vérifie ton e-mail pour confirmer, puis connecte-toi.")
   }
-  async function signIn(){
-    setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
-    if (error) return alert(error.message)
-  }
-  async function signOut(){
-    await supabase.auth.signOut()
-  }
+}
+
+async function signIn(){
+  setLoading(true)
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  setLoading(false)
+  if (error) return alert(error.message)
+}
+
 
   if (sessionEmail){
     return (

@@ -65,9 +65,10 @@ export function ProviderSignup({ onCreated }:{ onCreated: () => void }){
       onCreated()
       // reset
       setFirst(''); setLast(''); setCity(''); setPhone(''); setPhoto(''); setAbout(''); setCategories([]); setServices([{name:'', price:0}]); setLat(undefined); setLng(undefined)
-    } catch(err){
+    } catch(err: any){
       console.error(err)
-      alert('Erreur lors de la création du profil. Vérifiez la configuration Supabase et votre connexion.')
+      alert('Erreur création profil : ' + (err?.message ?? 'Vérifiez Supabase/connexion.'))
+    }
     } finally {
       setSaving(false)
     }
