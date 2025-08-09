@@ -13,21 +13,43 @@
 /* --- Améliorations mobile --- */
 html { -webkit-text-size-adjust: 100%; }
 
-/* Évite le zoom iOS quand on focus un champ (<16px) */
 @media (max-width: 640px) {
-  input, select, textarea, button {
-    font-size: 16px;
-  }
+  input, select, textarea, button { font-size: 16px; }
 }
 
-/* Confort tactile pour nos champs */
 .input {
   font-size: 16px;
   line-height: 1.25rem;
   min-height: 44px;
 }
 
-/* Inputs plus compacts dans l'en-tête sur mobile */
 @media (max-width: 640px) {
   .auth-panel input.input { width: 140px !important; }
+}
+
+/* --- Animations modals --- */
+@keyframes modalFade {
+  from { opacity: 0 }
+  to   { opacity: 1 }
+}
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(.98) }
+  to   { opacity: 1; transform: scale(1) }
+}
+
+.modal-backdrop {
+  animation: modalFade .18s ease-out both;
+}
+.modal-surface {
+  animation: modalPop .22s cubic-bezier(.2,.8,.2,1) both;
+}
+
+/* Barre flottante bas (CTA mobile) – gère les encoches iOS */
+.mobile-bottom-bar {
+  @apply fixed bottom-0 left-0 right-0 z-[10002];
+  padding-bottom: calc(env(safe-area-inset-bottom, 0) + 8px);
+  padding-top: 8px;
+  background: linear-gradient(to top, rgba(255,255,255,0.96), rgba(255,255,255,0.72));
+  backdrop-filter: saturate(1.1) blur(6px);
+  border-top: 1px solid rgba(0,0,0,0.06);
 }

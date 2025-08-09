@@ -47,8 +47,8 @@ export function ProviderDetail({ provider, onClose, refresh }: Props) {
 
   return createPortal(
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/30 z-[9998]" onClick={onClose} />
+      {/* Backdrop (animée) */}
+      <div className="fixed inset-0 bg-black/30 z-[9998] modal-backdrop" onClick={onClose} />
 
       {/* Container plein écran mobile, fenêtré desktop */}
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4 pointer-events-none">
@@ -57,7 +57,7 @@ export function ProviderDetail({ provider, onClose, refresh }: Props) {
             pointer-events-auto bg-white card
             w-full h-[100svh] rounded-none
             sm:max-w-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-xl
-            overflow-y-auto relative
+            overflow-y-auto relative modal-surface
           "
         >
           <button
@@ -72,7 +72,7 @@ export function ProviderDetail({ provider, onClose, refresh }: Props) {
             <div className="font-semibold text-base">Fiche prestataire</div>
           </div>
 
-          <div className="p-3 sm:p-6">
+          <div className="p-3 sm:p-6 pb-20 sm:pb-6">
             <div className="flex items-center gap-3">
               <img
                 src={provider.photo_url || 'https://placehold.co/160x160?text=Photo'}
@@ -138,20 +138,32 @@ export function ProviderDetail({ provider, onClose, refresh }: Props) {
               <p className="text-xs text-gray-500">Un seul avis par utilisateur et par prestataire.</p>
             </div>
           </div>
+
+          {/* CTA flottant mobile */}
+          <div className="mobile-bottom-bar sm:hidden">
+            <div className="px-3">
+              <a
+                href={`tel:${provider.phone}`}
+                className="btn w-full rounded-2xl py-3"
+              >
+                📞 Appeler {provider.first_name}
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Sous-modal d’édition */}
+      {/* Sous-modal d’édition (animé aussi) */}
       {editing && (
         <>
-          <div className="fixed inset-0 bg-black/30 z-[10000]" />
+          <div className="fixed inset-0 bg-black/30 z-[10000] modal-backdrop" />
           <div className="fixed inset-0 z-[10001] flex items-center justify-center p-0 sm:p-4 pointer-events-none">
             <div
               className="
                 pointer-events-auto bg-white card
                 w-full h-[100svh] rounded-none
                 sm:max-w-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-xl
-                overflow-y-auto relative
+                overflow-y-auto relative modal-surface
               "
             >
               <button
