@@ -47,7 +47,7 @@ export function ProviderSignup({ onCreated }:{ onCreated: () => void }){
     try{
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Upload image vers Storage (bucket 'photos')
+      // Upload image vers Storage (bucket 'photos'), si fichier fourni
       let finalPhotoUrl = photo_url || null
       if (file) {
         const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
@@ -58,11 +58,31 @@ export function ProviderSignup({ onCreated }:{ onCreated: () => void }){
         finalPhotoUrl = pub.publicUrl
       }
 
+      // INSERT provider
       const { data: p, error } = await supabase.from('providers')
-        .insert({ first_name, last_name, department, city, phone, photo_url: finalPhotoUrl, about: about || null, categories, user_id: user?.id || null })
-        .select('*').single()
-      if (error) throw error
+        .insert({
+          first_name, last_name, department, city, phone,
+          photo_url: finalPhotoUrl,
+          about: about || null,
+          categories,
+          // si user_id null, un trigger DB (si tu l'as ajouté) le remplira à auth.uid()
+          user_id: user?.id || null
+        })
+        .select('*')
+        .single()
 
+      // Gestion des erreurs (dont l'unicité "un profil par user")
+      if (error) {
+        const code = (error as any)?.code
+        if (code === '23505') {
+          alert('Vous avez déjà un profil prestataire (un seul profil par compte).')
+        } else {
+          alert('Erreur création profil : ' + error.message)
+        }
+        throw error
+      }
+
+      // INSERT services liés
       if (p?.id && clean.length){
         const withPid = clean.map(s => ({ ...s, provider_id: p.id }))
         const { error: sErr } = await supabase.from('services').insert(withPid)
@@ -70,10 +90,12 @@ export function ProviderSignup({ onCreated }:{ onCreated: () => void }){
       }
 
       onCreated()
+      // reset
       setFirst(''); setLast(''); setDepartment(''); setCity(''); setPhone(''); setPhoto(''); setFile(null); setAbout(''); setCategories([]); setServices([{name:'', price:0}])
     } catch(err: any){
       console.error(err)
-      alert('Erreur création profil : ' + (err?.message ?? 'Vérifiez la configuration Supabase et votre connexion.'))
+      // on a déjà alerté plus haut ; ici on garde un fallback
+      if (!err?.code) alert('Erreur création profil : Vérifiez la configuration Supabase et votre connexion.')
     } finally {
       setSaving(false)
     }
