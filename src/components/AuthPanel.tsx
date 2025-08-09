@@ -1,4 +1,4 @@
-
+// src/components/AuthPanel.tsx
 import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
@@ -9,38 +9,32 @@ export function AuthPanel(){
   const [loading, setLoading] = useState(false)
 
   useEffect(()=>{
-    const s = supabase.auth.getSession().then(({ data }) => {
-      setSessionEmail(data.session?.user?.email ?? null)
-    })
+    supabase.auth.getSession().then(({ data }) => setSessionEmail(data.session?.user?.email ?? null))
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
       setSessionEmail(session?.user?.email ?? null)
     })
     return () => { sub.subscription.unsubscribe() }
   }, [])
-  
-// src/components/AuthPanel.tsx
-async function signUp(){
-  setLoading(true)
-  const { data, error } = await supabase.auth.signUp({ email, password })
-  setLoading(false)
-  if (error) return alert(error.message)
 
-  if (data.session) {
-    // Email confirmation désactivée -> session directe
-    alert("Inscription réussie. Vous êtes connecté.")
-  } else {
-    // Email confirmation activée -> pas de session tant que tu n'as pas confirmé
-    alert("Inscription réussie. Vérifie ton e-mail pour confirmer, puis connecte-toi.")
+  async function signUp(){
+    setLoading(true)
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    setLoading(false)
+    if (error) return alert(error.message)
+    if (data.session) alert('Inscription réussie. Vous êtes connecté.')
+    else alert('Inscription réussie. Vérifiez votre e-mail puis connectez-vous.')
   }
-}
 
-async function signIn(){
-  setLoading(true)
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
-  setLoading(false)
-  if (error) return alert(error.message)
-}
+  async function signIn(){
+    setLoading(true)
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    setLoading(false)
+    if (error) return alert(error.message)
+  }
 
+  async function signOut(){
+    await supabase.auth.signOut()
+  }
 
   if (sessionEmail){
     return (
