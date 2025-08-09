@@ -13,23 +13,20 @@ export function AuthPanel(){
   const [myProvider, setMyProvider] = useState<Provider | null>(null)
   const [editOpen, setEditOpen] = useState(false)
 
-  // charge la session + mon provider
   const loadSessionAndMine = async () => {
     try {
       const { data } = await supabase.auth.getSession()
       setSessionEmail(data.session?.user?.email ?? null)
 
-      const { data: userData, error: uErr } = await supabase.auth.getUser()
-      if (uErr) console.error('getUser error:', uErr)
+      const { data: userData } = await supabase.auth.getUser()
       const uid = userData.user?.id
       if (!uid) { setMyProvider(null); return }
 
-      const { data: mine, error: mErr } = await supabase
+      const { data: mine } = await supabase
         .from('providers')
         .select('*, services(*), ratings(stars)')
         .eq('user_id', uid)
         .maybeSingle()
-      if (mErr && (mErr as any).code !== 'PGRST116') console.error('fetch my provider error:', mErr)
 
       setMyProvider((mine || null) as unknown as Provider | null)
     } catch (e) {
@@ -39,9 +36,7 @@ export function AuthPanel(){
 
   useEffect(()=>{
     loadSessionAndMine()
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, _session) => {
-      loadSessionAndMine()
-    })
+    const { data: sub } = supabase.auth.onAuthStateChange(() => loadSessionAndMine())
     return () => { sub.subscription.unsubscribe() }
   }, [])
 
@@ -49,11 +44,9 @@ export function AuthPanel(){
     try{
       setLoading(true)
       const { data, error } = await supabase.auth.signUp({ email, password })
-      if (error) { console.error('signUp error:', error); alert(error.message); return }
+      if (error) { alert(error.message); return }
       if (data.session) alert('Inscription réussie. Vous êtes connecté.')
       else alert('Inscription réussie. Vérifiez votre e-mail puis connectez-vous.')
-    } catch(e:any){
-      console.error(e); alert(e.message || 'Erreur inconnue à l’inscription')
     } finally { setLoading(false); loadSessionAndMine() }
   }
 
@@ -61,10 +54,8 @@ export function AuthPanel(){
     try{
       setLoading(true)
       const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) { console.error('signIn error:', error); alert(error.message); return }
+      if (error) { alert(error.message); return }
       await loadSessionAndMine()
-    } catch(e:any){
-      console.error(e); alert(e.message || 'Erreur inconnue à la connexion')
     } finally { setLoading(false) }
   }
 
@@ -75,7 +66,7 @@ export function AuthPanel(){
 
   if (sessionEmail){
     return (
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-sm auth-panel">
         <span className="text-gray-600 truncate max-w-[180px]" title={sessionEmail}>
           Connecté : {sessionEmail}
         </span>
@@ -95,7 +86,6 @@ export function AuthPanel(){
           Se déconnecter
         </button>
 
-        {/* Modal via Portal pour éviter les problèmes de z-index/sticky header */}
         {editOpen && myProvider && createPortal(
           <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-[9999] overflow-auto">
             <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 bg-white relative rounded-xl">
@@ -121,9 +111,8 @@ export function AuthPanel(){
     )
   }
 
-  // Non connecté : mini formulaire
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 auth-panel">
       <input
         className="input"
         style={{width:220}}
