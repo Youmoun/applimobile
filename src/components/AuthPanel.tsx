@@ -16,8 +16,7 @@ export function AuthPanel(){
   const loadSessionAndMine = async () => {
     try {
       const { data } = await supabase.auth.getSession()
-      const sEmail = data.session?.user?.email ?? null
-      setSessionEmail(sEmail)
+      setSessionEmail(data.session?.user?.email ?? null)
 
       const { data: userData, error: uErr } = await supabase.auth.getUser()
       if (uErr) console.error('getUser error:', uErr)
@@ -60,9 +59,8 @@ export function AuthPanel(){
   async function signIn(){
     try{
       setLoading(true)
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) { console.error('signIn error:', error); alert(error.message); return }
-      // connecté
       await loadSessionAndMine()
     } catch(e:any){
       console.error(e); alert(e.message || 'Erreur inconnue à la connexion')
@@ -96,9 +94,10 @@ export function AuthPanel(){
           Se déconnecter
         </button>
 
+        {/* Modal scrollable */}
         {editOpen && myProvider && (
-          <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-50">
-            <div className="card max-w-2xl w-full p-6 bg-white relative">
+          <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4 z-50 overflow-auto">
+            <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 bg-white relative rounded-xl">
               <button
                 className="absolute right-3 top-3 text-gray-500 hover:text-gray-900"
                 onClick={()=> setEditOpen(false)}
